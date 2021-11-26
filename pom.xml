@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.github.carlos-contreras-ruiz</groupId>
+    <artifactId>swagger-annotations</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>Swagger Annotations Dependency</name>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+
+        <maven.compiler.showDeprecation>true</maven.compiler.showDeprecation>
+        <archiveClasses>true</archiveClasses>
+
+        <grpc.version>1.18.0</grpc.version>
+        <grpc-google-common-protos-version>1.12.0</grpc-google-common-protos-version>
+        <protoc-gen-swagger.version>v1.7.0</protoc-gen-swagger.version>
+        <protobuf-java-util.version>3.6.1</protobuf-java-util.version>
+        <protoc.version>3.5.1-1</protoc.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java-util</artifactId>
+            <version>${protobuf-java-util.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-services</artifactId>
+            <version>${grpc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+            <version>${grpc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+            <version>${grpc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.api.grpc</groupId>
+            <artifactId>grpc-google-common-protos</artifactId>
+            <version>${grpc-google-common-protos-version}</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <extensions>
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.6.1</version>
+            </extension>
+        </extensions>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <sources>
+                                <source>src/main/proto</source>
+                            </sources>
+                        </configuration>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.xolstice.maven.plugins</groupId>
+                <artifactId>protobuf-maven-plugin</artifactId>
+                <version>0.6.1</version>
+                <configuration>
+                    <clearOutputDirectory>false</clearOutputDirectory>
+                    <protocArtifact>com.google.protobuf:protoc:${protoc.version}:exe:${os.detected.classifier}</protocArtifact>
+                    <useArgumentFile>true</useArgumentFile>
+                    <hashDependentPaths>false</hashDependentPaths>
+                    <checkStaleness>true</checkStaleness>
+                    <descriptorSetOutputDirectory>${project.build.directory}</descriptorSetOutputDirectory>
+
+                    <attachProtoSources>true</attachProtoSources>
+
+                </configuration>
+                <executions>
+                    <execution>
+
+                        <!-- this generates the java protobuf code -->
+                        <id>java</id>
+                        <configuration>
+                            <includeDependenciesInDescriptorSet>true</includeDependenciesInDescriptorSet>
+                            <descriptorSetOutputDirectory>${project.build.directory}</descriptorSetOutputDirectory>
+                            <writeDescriptorSet>true</writeDescriptorSet>
+                            <attachDescriptorSet>true</attachDescriptorSet>
+                        </configuration>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                    </execution>
+                    <execution>
+                        <!-- this generates the grpc java code -->
+                        <id>grpc-java</id>
+                        <configuration>
+                            <pluginId>grpc-java</pluginId>
+                            <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}</pluginArtifact>
+                        </configuration>
+                        <goals>
+                            <goal>compile-custom</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>com.github.os72</groupId>
+                <artifactId>protoc-jar-maven-plugin</artifactId>
+                <version>3.5.1.1</version>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <protocArtifact>com.google.protobuf:protoc:${protoc.version}:exe:${os.detected.classifier}</protocArtifact>
+                            <includeDirectories>
+                                <include>${project.build.directory}/protoc-dependencies/com/google/api/grpc/proto-google-common-protos/${grpc-google-common-protos-version}/proto-google-common-protos-${grpc-google-common-protos-version}.jar/</include>
+                                <include>${project.build.directory}/protoc-dependencies/com/google/protobuf/protobuf-java/${protobuf-java-util.version}/protobuf-java-${protobuf-java-util.version}.jar/</include>
+                            </includeDirectories>
+                            <inputDirectories>
+                                <include>${project.basedir}/src/main/proto</include>
+                            </inputDirectories>
+                            <outputTargets>
+                                <outputTarget>
+                                    <type>protoc-gen-swagger</type>
+                                    <pluginArtifact>com.grpc-ecosystem.grpc-gateway:protoc-gen-swagger:${protoc-gen-swagger.version}:exe:${os.detected.classifier}</pluginArtifact>
+                                </outputTarget>
+                            </outputTargets>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Adds the .proto and .swagger.json as part of the deployment -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <sources>
+                                <source>src/main/proto</source>
+                            </sources>
+                        </configuration>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                    </execution>
+
+                    <execution>
+                        <id>attach-artifacts</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>attach-artifact</goal>
+                        </goals>
+                        <configuration>
+                            <artifacts>
+                                <!-- <artifact>
+                                    <file>${project.build.directory}/generated-sources/${proto.file.name}.swagger.json</file>
+                                    <type>json</type>
+                                    <classifier>swagger</classifier>
+                                </artifact> -->
+                                <artifact>
+                                    <file>${project.basedir}/src/main/proto/com/github/carlos-contreras-ruiz/annotations.proto</file>
+                                    <!--<file>${project.basedir}/src/main/proto/com/github/carlos-contreras-ruiz/openapiv2.proto</file>-->
+                                    <type>proto</type>
+                                </artifact>
+                            </artifacts>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <descriptors>
+                        <descriptor>assembly-protos.xml</descriptor>
+                        <descriptor>assembly-allprotos.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Need to use >v2.8 of maven deployment to use deployment
+                repos from settings.xml -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.2</version>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
